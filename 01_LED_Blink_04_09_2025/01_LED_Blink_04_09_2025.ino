@@ -25,9 +25,9 @@ void redLedTask(void *pvParameters)
   while(1)
   {
     digitalWrite(redLed, HIGH);
-    vTaskDelay(10);
+    delay(500);
     digitalWrite(redLed, LOW);
-    vTaskDelay(10);
+    delay(500);
     Serial.println("Red Led Task Running");
   }
 }
@@ -38,9 +38,9 @@ void greenLedTask(void *pvParameters)
   while(1)
   {
     digitalWrite(greenLed, HIGH);
-    vTaskDelay(10);
+    vTaskDelay(500);
     digitalWrite(greenLed, LOW);
-    vTaskDelay(10);
+    vTaskDelay(500);
     Serial.println("Green Led Task Running");
   }
 }
