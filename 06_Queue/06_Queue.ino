@@ -3,8 +3,6 @@
 
 QueueHandle_t dataQueue;
 
-const int analogPin = A0;
-
 void readAnalogTask(void *pvParameters);
 void printTask(void *pvParameters);
 
@@ -33,7 +31,7 @@ void readData(void *pvParameters)
 
   while(1) 
   {
-    sensorValue = analogRead(analogPin);
+    sensorValue = analogRead(A0);
     xQueueSend(dataQueue, &sensorValue, (TickType_t)10);
     vTaskDelay(pdMS_TO_TICKS(500));
   }
