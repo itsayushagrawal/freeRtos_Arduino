@@ -5,6 +5,8 @@
   Example: You can create one “blink task function” but tell one instance to blink LED1, and another to blink LED2, just by passing the pin number as a parameter.
 
 We can pass any number of variables for a task by passing pointer to a array or struct in pvParameter
+
+void * -> generic pointer, can be used to pass any type of data
 */
 
 #include <Arduino_FreeRTOS.h>
