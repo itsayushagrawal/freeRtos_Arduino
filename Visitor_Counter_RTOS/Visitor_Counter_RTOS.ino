@@ -32,7 +32,6 @@ void setup()
 
   xTaskCreate(SensorTask, "Sensor", 128, NULL, 1, NULL);
   xTaskCreate(CountTask, "Counter", 128, NULL, 1, NULL);
-  xTaskCreate(DisplayTask, "Display", 128, NULL, 1, NULL);
   
   vTaskStartScheduler();
 
@@ -88,15 +87,12 @@ void CountTask(void* pvParameters)
       { 
         current_count = 0;
       }
+      DisplayTask();
     }
   }
 }
 
-void DisplayTask(void* pvParameters)
+void DisplayTask()
 {
-  while(1)
-  {
     Serial.println(current_count);
-    vTaskDelay(pdMS_TO_TICKS(500));
-  }
 }
