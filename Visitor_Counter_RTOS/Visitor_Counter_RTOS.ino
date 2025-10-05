@@ -1,27 +1,34 @@
+/*
+Assuming there are 3 independent rooms and a sensor node is installed at the only door
+*/
+
+
 #include <Arduino_FreeRTOS.h>
 #include <queue.h>
 
-int current_count=0;
+int room_count[3] = {0,0,0};
 
-QueueHandle_t sensorQueue;
+QueueHandle_t SensorQueue;
 
-const uint8_t in_pin =2;
-const uint8_t out_pin =3;
+const int room_pin[3] ={2,4,6};
+
+struct SensorEvent
+{
+  int room_id;
+  int direction;
+};
 
 void SensorTask(void* pvParameters);
 void CountTask(void* pvParameters);
-void DisplayTask(void* pvParameters);
+
+void DisplayTask(void DisplayCount(int id));
 
 void setup() 
 {
   Serial.begin(9600);
 
-  pinMode(in_pin, INPUT);
-  pinMode(out_pin, INPUT);
-  Serial.println("Staring program");
-
-  sensorQueue = xQueueCreate(10, sizeof(int));
-  if(sensorQueue == NULL)
+  SensorQueue = xQueueCreate(10, sizeof(SensorEvent));
+  if(SensorQueue == NULL)
   {
     Serial.println("Queue not created");
   }
@@ -30,7 +37,10 @@ void setup()
     Serial.println("Queue created");
   }
 
-  xTaskCreate(SensorTask, "Sensor", 128, NULL, 1, NULL);
+  for(int i=0;i<3;i++)    //Creating separate task for each room
+  {
+    xTaskCreate(SensorTask, "Room", 128, &room_pin[i], 1, NULL);
+  }
   xTaskCreate(CountTask, "Counter", 128, NULL, 1, NULL);
   
   vTaskStartScheduler();
@@ -44,8 +54,13 @@ void loop()
 
 void SensorTask(void* pvParameters)
 {
-  int direction=0;
+  SensorEvent evt;
+  int in_pin = *(int *)pvParameters;
+  int out_pin = in_pin + 1;
+  evt.room_id= (in_pin /2)-1;   // maps 2->0  4->1   6->2
   int timeout =500;
+
+
   while(1)
   {
     if(digitalRead(in_pin)==1)
@@ -55,8 +70,9 @@ void SensorTask(void* pvParameters)
       {
         if(digitalRead(out_pin)==1)
         {
-          direction = 1;
-          xQueueSend(sensorQueue, &direction, portMAX_DELAY);
+          evt.direction = 1;
+          xQueueSend(SensorQueue, &evt, portMAX_DELAY);
+          break;
         }
       }
     }
@@ -67,8 +83,9 @@ void SensorTask(void* pvParameters)
       {
         if(digitalRead(in_pin)==1)
         {
-          direction =-1;
-          xQueueSend(sensorQueue, &direction, portMAX_DELAY);
+          evt.direction = -1;
+          xQueueSend(SensorQueue, &evt, portMAX_DELAY);
+          break;
         }
       }
     }
@@ -77,22 +94,22 @@ void SensorTask(void* pvParameters)
 
 void CountTask(void* pvParameters)
 {
-  int direction;
+  SensorEvent evt;
   while(1)
   {
-    if (xQueueReceive(sensorQueue, &direction, portMAX_DELAY) == pdPASS) 
+    if (xQueueReceive(SensorQueue, &evt, portMAX_DELAY) == pdPASS) 
     {
-      current_count += direction;
-      if (current_count < 0)
+      room_count[evt.room_id] += evt.direction;
+      if (room_count[evt.room_id] <0)
       { 
-        current_count = 0;
+        room_count[evt.room_id]=0;
       }
-      DisplayTask();
+      DisplayCount(evt.room_id);
     }
   }
 }
 
-void DisplayTask()
+void DisplayCount(int id)
 {
-    Serial.println(current_count);
+  Serial.print("Room "); Serial.print(id); Serial.print(": "); Serial.println(room_count[id]);
 }
